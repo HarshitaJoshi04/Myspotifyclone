@@ -76,30 +76,34 @@ const playMusic = (track, pause = false) => {
 }
 
 async function displayAlbums() {
-    let a = await fetch(`songs/index.json`);
-    let folders = await a.json();
-    let cardContainer = document.querySelector(".cardContainer");
+    let a = await fetch(`songs/`)
+    let response = await a.text();
+    let div = document.createElement("div")
+    div.innerHTML = response;
+    let anchors = div.getElementsByTagName("a")
+    let cardContainer = document.querySelector(".cardContainer")
 
-    for (let folder of folders) {
-        let res = await fetch(`songs/${folder}/info.json`);
-        let data = await res.json();
+    let array = Array.from(anchors)
+    for (let index = 0; index < array.length; index++) {
+        const e = array[index];
+        if (e.href.includes("/songs/") && !e.href.includes(".htaccess")) {
+            let folder = e.href.split("/").slice(-1)[0]
+            // console.log("folder = ", folder);
 
-        cardContainer.innerHTML += `
-        <div data-folder="${folder}" class="card">
-            <div class="play"><img src="svg/playG.svg" alt=""></div>
-            <img src="songs/${folder}/cover.jpg" alt="">
-            <h2>${data.title}</h2>
-            <p>${data.description}</p>
-        </div>`;
-    }
+            // get the metadata of the folder
+            let a = await fetch(`songs/${folder}/info.json`)
+            let response = await a.json();
 
-    // Add event listeners
-    Array.from(document.getElementsByClassName("card")).forEach((e) => {
-        e.addEventListener("click", async item => {
-            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
-            playMusic(songs[0]);
-        });
-    });
+            cardContainer.innerHTML = cardContainer.innerHTML + ` <div  data-folder="${folder}" class="card">
+                        <div class="play"><img src="svg/playG.svg"  alt=""> </div>
+
+                        <img src="songs/${folder}/cover.jpg" alt="">
+                        <h2>${response.title}</h2>
+                        <p>${response.description}</p>
+                    </div>`
+        }
+
+    }  
   
     
     //load the playlist whenever card is clicked
