@@ -4,6 +4,12 @@ let currentSong = new Audio();//global variable
 let songs;
 let currFolder;
 let mode = "normal";
+let play = document.getElementById("play");
+let previous = document.getElementById("previous");
+let next = document.getElementById("next");
+let currentIndex = 0;
+
+
 
 
 function formatTime(seconds) {
@@ -42,7 +48,7 @@ async function getSongs(folder) {
                         </div>
                         <div class="playnow">
                             <span>Play Now</span>
-                            <img class="invert" src="svg/play.svg" src="">
+                            <img class="invert" src="svg/play.svg" >
                         </div></li>`;
     }
 
@@ -76,46 +82,36 @@ const playMusic = (track, pause = false) => {
 }
 
 async function displayAlbums() {
-    let a = await fetch(`songs/`)
-    let response = await a.text();
-    let div = document.createElement("div")
-    div.innerHTML = response;
-    let anchors = div.getElementsByTagName("a")
-    let cardContainer = document.querySelector(".cardContainer")
+    let a = await fetch(`songs/songs.json`);
+    let folders = await a.json();
+    let cardContainer = document.querySelector(".cardContainer");
 
-    let array = Array.from(anchors)
-    for (let index = 0; index < array.length; index++) {
-        const e = array[index];
-        if (e.href.includes("/songs/")) {
-            let folder = e.href.split("/").slice(-1)[0]
-            // console.log("folder = ", folder);
+    for (let folderData of folders) {
+        let folder = folderData.folder;
 
-            // get the metadata of the folder
-            let a = await fetch(`songs/${folder}/info.json`)
-            let response = await a.json();
+        // Fetch info.json from inside each folder
+        let infoRes = await fetch(`songs/${folder}/info.json`);
+        let info = await infoRes.json();
 
-            cardContainer.innerHTML = cardContainer.innerHTML + ` <div  data-folder="${folder}" class="card">
-                        <div class="play"><img src="svg/playG.svg"  alt=""> </div>
+        cardContainer.innerHTML += `
+            <div data-folder="${folder}" class="card">
+                <div class="play"><img src="svg/playG.svg" alt=""></div>
+                <img src="songs/${folder}/cover.jpg" alt="">
+                <h2>${info.title}</h2>
+                <p>${info.description}</p>
+            </div>`;
+    }
 
-                        <img src="songs/${folder}/cover.jpg" alt="">
-                        <h2>${response.title}</h2>
-                        <p>${response.description}</p>
-                    </div>`
-        }
-
-    }  
-  
-    
-    //load the playlist whenever card is clicked
+    // Attach event listeners to album cards
     Array.from(document.getElementsByClassName("card")).forEach((e) => {
         e.addEventListener("click", async item => {
             songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`)
             playMusic(songs[0])
+        });
+    });
 
 
-        })
-
-    })
+  
 
 
 }
